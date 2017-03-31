@@ -10,19 +10,50 @@
  */
 class Hybrid_Providers_Justia extends Hybrid_Provider_Model_OAuth2 {
     // default permissions
-//    public $scope = "basic,email,read_profiles";
-    public $scope = "basic";
+    public $scope = "basic,email,read_profiles";
 
     /**
      * IDp wrappers initializer
      */
     function initialize() {
-        parent::initialize();
+        if (!$this->config["keys"]["id"] || !$this->config["keys"]["secret"]) {
+            throw new Exception(
+                "Your application id and secret are required in order to connect to {$this->providerId}.", 4);
+        }
 
-        // Provider api end-points
+        // override requested scope
+        if (isset($this->config["scope"]) && !empty($this->config["scope"])) {
+            $this->scope = $this->config["scope"];
+        }
+
+        // include OAuth2 client
+        require_once Hybrid_Auth::$config["path_libraries"] . "OAuth/OAuth2Client.php";
+        require_once Hybrid_Auth::$config["path_libraries"] . "Justia/JustiaOAuth2Client.php";
+
+        // create a new OAuth2 client instance
+        $this->api = new JustiaOAuth2Client($this->config["keys"]["id"],
+                                            $this->config["keys"]["secret"],
+                                            $this->endpoint,
+                                            $this->compressed);
+
+        // If we have an access token, set it
+        if ($this->token("access_token")) {
+            $this->api->access_token = $this->token("access_token");
+            $this->api->refresh_token = $this->token("refresh_token");
+            $this->api->access_token_expires_in = $this->token("expires_in");
+            $this->api->access_token_expires_at = $this->token("expires_at");
+        }
+
+        // Set curl proxy if exist
+        if (isset(Hybrid_Auth::$config["proxy"])) {
+            $this->api->curl_proxy = Hybrid_Auth::$config["proxy"];
+        }
+
+        // Provider api endpoints and state
         $this->api->api_base_url  = "https://accounts.justia.com/api/v1.0/me";
         $this->api->authorize_url = "https://accounts.justia.com/oauth/authorize";
         $this->api->token_url     = "https://accounts.justia.com/oauth/access_token";
+        $this->api->state         = md5(time());
     }
 
     /**
@@ -52,5 +83,14 @@ class Hybrid_Providers_Justia extends Hybrid_Provider_Model_OAuth2 {
         }
 
         return $this->user->profile;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    function loginBegin() {
+        $params = array("scope" => $this->scope, "state" => $this->api->state);
+        // redirect the user to the provider authentication url
+        Hybrid_Auth::redirect($this->api->authorizeUrl($params));
     }
 }
