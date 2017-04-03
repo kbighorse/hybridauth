@@ -50,7 +50,7 @@ class Hybrid_Providers_Justia extends Hybrid_Provider_Model_OAuth2 {
         }
 
         // Provider api endpoints and state
-        $this->api->api_base_url  = "https://accounts.justia.com/api/v1.0/me";
+        $this->api->api_base_url  = "https://accounts.justia.com/api/v1.0/";
         $this->api->authorize_url = "https://accounts.justia.com/oauth/authorize";
         $this->api->token_url     = "https://accounts.justia.com/oauth/access_token";
         $this->api->state         = md5(time());
@@ -65,10 +65,11 @@ class Hybrid_Providers_Justia extends Hybrid_Provider_Model_OAuth2 {
             'Connection: Keep-Alive',
             'Authorization: Bearer ' . $this->api->access_token,
         );
-        $data = $this->api->api();
+        $data = $this->api->api("me");
 
         if (!isset($data->uid)) {
-            throw new Exception( "User profile request failed! {$this->providerId} returned an invalid response.", 6);
+            throw new Exception(
+                "User profile request failed! {$this->providerId} returned an invalid response.", 6);
         }
 
         $this->user->profile->identifier  = @ $data->uid;
