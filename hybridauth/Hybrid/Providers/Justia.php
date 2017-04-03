@@ -65,9 +65,9 @@ class Hybrid_Providers_Justia extends Hybrid_Provider_Model_OAuth2 {
             'Connection: Keep-Alive',
             'Authorization: Bearer ' . $this->api->access_token,
         );
-        $data = $this->api->api( "user" );
+        $data = $this->api->api();
 
-        if (!isset($data->id)) {
+        if (!isset($data->uid)) {
             throw new Exception( "User profile request failed! {$this->providerId} returned an invalid response.", 6);
         }
 
