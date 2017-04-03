@@ -6,7 +6,12 @@
 */
 
 /**
- * Hybrid_Providers_Justia
+ * Justia OAuth2 Class
+ *
+ * @package             HybridAuth providers package
+ * @author              Kimball Bighorse <kbighorse@yahoo.com>
+ * @version             0.1
+ * @license             BSD License
  */
 class Hybrid_Providers_Justia extends Hybrid_Provider_Model_OAuth2 {
     // default permissions
